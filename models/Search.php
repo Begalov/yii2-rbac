@@ -14,28 +14,43 @@ namespace dektrium\rbac\models;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\db\Query;
+use yii\helpers\ArrayHelper;
 
 /**
+ * Search model for auth items (roles and permissions).
+ * 
  * @author Dmitry Erofeev <dmeroff@gmail.com>
  */
 class Search extends Model
 {
-    /** @var string */
+    /**
+     * @var string
+     */
     public $name;
     
-    /** @var string */
+    /**
+     * @var string
+     */
     public $description;
     
-    /** @var string */
+    /**
+     * @var string
+     */
     public $rule_name;
     
-    /** @var \dektrium\rbac\components\DbManager */
+    /**
+     * @var \dektrium\rbac\components\DbManager
+     */
     protected $manager;
     
-    /** @var int */
+    /**
+     * @var int
+     */
     protected $type;
 
-    /** @inheritdoc */
+    /**
+     * @inheritdoc
+     */
     public function __construct($type, $config = [])
     {
         parent::__construct($config);
@@ -43,7 +58,9 @@ class Search extends Model
         $this->type    = $type;
     }
     
-    /** @inheritdoc */
+    /**
+     * @inheritdoc
+     */
     public function scenarios()
     {
         return [
@@ -52,8 +69,8 @@ class Search extends Model
     }
     
     /**
-     * @param  array              $params
-     * @return ActiveDataProvider
+     * @param  array $params
+     * @return ArrayDataProvider
      */
     public function search($params = [])
     {
@@ -72,5 +89,36 @@ class Search extends Model
         $dataProvider->allModels = $query->all($this->manager->db);
         
         return $dataProvider;
+    }
+
+    /**
+     * Returns list of item names.
+     *
+     * @return array
+     */
+    public function getNameList()
+    {
+        $rows = (new Query)
+            ->select(['name'])
+            ->andWhere(['type' => $this->type])
+            ->from($this->manager->itemTable)
+            ->all();
+
+        return ArrayHelper::map($rows, 'name', 'name');
+    }
+
+    /**
+     * Returns list of rule names.
+     * 
+     * @return array
+     */
+    public function getRuleList()
+    {
+        $rows = (new Query())
+            ->select(['name'])
+            ->from($this->manager->ruleTable)
+            ->all();
+
+        return ArrayHelper::map($rows, 'name', 'name');
     }
 }

@@ -15,7 +15,9 @@ use dektrium\rbac\components\DbManager;
 use dektrium\rbac\components\ManagerInterface;
 use dektrium\user\Module as UserModule;
 use yii\base\Application;
+use yii\web\Application as WebApplication;
 use yii\base\BootstrapInterface;
+use yii\base\InvalidConfigException;
 
 /**
  * Bootstrap class registers translations and needed application components.
@@ -23,6 +25,8 @@ use yii\base\BootstrapInterface;
  */
 class Bootstrap implements BootstrapInterface
 {
+    const VERSION = '1.0.0-alpha';
+
     /** @inheritdoc */
     public function bootstrap($app)
     {
@@ -31,19 +35,23 @@ class Bootstrap implements BootstrapInterface
             $app->get('i18n')->translations['rbac*'] = [
                 'class'    => 'yii\i18n\PhpMessageSource',
                 'basePath' => __DIR__ . '/messages',
+                'sourceLanguage' => 'en-US',
             ];
         }
-            
+
         if ($this->checkRbacModuleInstalled($app)) {
-            // register auth manager
-            if (!$this->checkAuthManagerConfigured($app)) {
+            $authManager = $app->get('authManager', false);
+
+            if (!$authManager) {
                 $app->set('authManager', [
                     'class' => DbManager::className(),
                 ]);
+            } else if (!($authManager instanceof ManagerInterface)) {
+                throw new InvalidConfigException('You have wrong authManager configuration');
             }
 
             // if dektrium/user extension is installed, copy admin list from there
-            if ($this->checkUserModuleInstalled($app)) {
+            if ($this->checkUserModuleInstalled($app) && $app instanceof WebApplication) {
                 $app->getModule('rbac')->admins = $app->getModule('user')->admins;
             }   
         }
@@ -56,7 +64,11 @@ class Bootstrap implements BootstrapInterface
      */
     protected function checkRbacModuleInstalled(Application $app)
     {
-        return $app->hasModule('rbac') && $app->getModule('rbac') instanceof Module;
+        if ($app instanceof WebApplication) {
+            return $app->hasModule('rbac') && $app->getModule('rbac') instanceof RbacWebModule;
+        } else {
+            return $app->hasModule('rbac') && $app->getModule('rbac') instanceof RbacConsoleModule;
+        }
     }
     
     /**

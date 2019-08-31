@@ -10,16 +10,15 @@
  */
 
 /**
- * @var $this  yii\web\View
+ * @var $this     yii\web\View
+ * @var $content string
  */
+
+use dektrium\rbac\widgets\Menu;
 
 ?>
 
-<?= $this->render('/_alert', [
-    'module' => Yii::$app->getModule('rbac'),
-]) ?>
-
-<?= $this->render('_menu') ?>
+<?= Menu::widget() ?>
 
 <div style="padding: 10px 0">
     <?= $content ?>
